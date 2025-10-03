@@ -4,22 +4,11 @@ import google.generativeai as genai
 # 페이지 설정
 st.set_page_config(page_title="Gemini 챗봇", page_icon="🤖")
 
-# 타이틀
-st.title("💬 Gemini 챗봇")
-
-# 사이드바에서 API 키 입력
-with st.sidebar:
-    st.header("설정")
-    api_key = st.text_input("Gemini API Key", type="password")
-    st.markdown("[API 키 발급받기](https://aistudio.google.com/app/apikey)")
-    
-    if st.button("대화 내역 초기화"):
-        st.session_state.messages = []
-        st.rerun()
-
-# API 키가 입력되지 않은 경우
-if not api_key:
-    st.info("👈 사이드바에서 Gemini API 키를 입력해주세요.")
+# Secrets에서 API 키 가져오기
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except:
+    st.error("⚠️ API 키가 설정되지 않았습니다. Streamlit Cloud의 Secrets에 GEMINI_API_KEY를 추가해주세요.")
     st.stop()
 
 # Gemini 설정
@@ -29,6 +18,16 @@ model = genai.GenerativeModel('gemini-pro')
 # 세션 상태 초기화
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+# 타이틀
+st.title("💬 Gemini 챗봇")
+
+# 사이드바 (대화 초기화 버튼만)
+with st.sidebar:
+    st.header("옵션")
+    if st.button("대화 내역 초기화"):
+        st.session_state.messages = []
+        st.rerun()
 
 # 이전 대화 내역 표시
 for message in st.session_state.messages:
@@ -63,4 +62,3 @@ if prompt := st.chat_input("메시지를 입력하세요..."):
             
     except Exception as e:
         st.error(f"오류가 발생했습니다: {str(e)}")
-        st.info("API 키가 올바른지 확인해주세요.")
