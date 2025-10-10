@@ -533,42 +533,30 @@ elif st.session_state.step == "진료":
 # 3단계: 처방전
 elif st.session_state.step == "처방전":
     
-    # HTML 코드 블록 (환자 정보 및 빅데이터 분석 배너)
-    prescription_header_html = f"""
-        <div style='border: 3px solid #2E7D32; padding: 2rem; border-radius: 10px; background: white; margin-bottom: 2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>
-            <div style='text-align: center; margin-bottom: 1.5rem;'>
-                <div style='font-size: 3rem; margin-bottom: 0.5rem;'>🏥</div>
-                <h2 style='margin: 0; color: #1B5E20; font-size: 1.8rem;'>상권 마케팅 처방 클리닉</h2>
-                <p style='margin: 0.3rem 0; color: #2E7D32;'>Marketing Strategy Prescription Clinic</p>
-                <div style='border-top: 2px solid #4CAF50; margin: 1rem auto; width: 60%;'></div>
-            </div>
-            
-            <table style='width: 100%; border-collapse: collapse;'>
-                <tr>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; width: 30%; color: #666;'><strong>환자명 (가맹점)</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info.get('store_name', 'N/A')}</td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; width: 20%; color: #666;'><strong>차트번호</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{datetime.now().strftime('%Y%m%d')}</td>
-                </tr>
-                <tr>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; color: #666;'><strong>업종</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info.get('business_type', 'N/A')}</td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; color: #666;'><strong>발급일</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info.get('date', 'N/A')}</td>
-                </tr>
-                <tr>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; color: #666;'><strong>위치</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;' colspan='3'>{st.session_state.store_info.get('region', 'N/A')} - {st.session_state.store_info.get('location', 'N/A')}</td>
-                </tr>
-            </table>
-            
-            <div style='margin-top: 1rem; padding: 0.8rem; background: #F1F8E9; border-radius: 5px; text-align: center;'>
-                <span style='color: #558B2F; font-weight: bold;'>📊 신한카드 빅데이터 기반 분석</span>
-            </div>
+    # ----------------------------------------------------
+    # 오류가 발생했던 HTML 테이블과 분석 배너를 마크다운으로 대체하고 디자인 요소 삭제
+    # ----------------------------------------------------
+    st.markdown(f"""
+        <div style='text-align: center; padding: 1.5rem; background: #E8F5E9; border-radius: 10px; margin-bottom: 2rem;'>
+            <div style='font-size: 2.5rem; margin-bottom: 0.5rem;'>🏥</div>
+            <h2 style='margin: 0; color: #1B5E20;'>상권 마케팅 처방 클리닉</h2>
+            <p style='margin: 0.3rem 0; color: #2E7D32;'>Marketing Strategy Prescription Clinic</p>
+            <div style='border-top: 1px solid #4CAF50; margin: 1rem auto; width: 60%;'></div>
         </div>
-    """
-    st.markdown(prescription_header_html, unsafe_allow_html=True) # HTML 렌더링을 위해 unsafe_allow_html=True 사용
+    """, unsafe_allow_html=True)
+
+    # 순수 마크다운으로 환자 정보 요약
+    info = st.session_state.store_info
+    st.markdown("### 📋 환자 차트 요약")
+    st.info(f"""
+    - **환자명 (가맹점):** {info.get('store_name', 'N/A')}
+    - **업종:** {info.get('business_type', 'N/A')}
+    - **위치:** {info.get('region', 'N/A')} - {info.get('location', 'N/A')}
+    - **발급일:** {info.get('date', 'N/A')}
+    """)
+    st.markdown("#### 📊 신한카드 빅데이터 기반 분석 결과")
     
+    # 처방전 본문 출력 (마크다운)
     with st.container(border=True):
         st.markdown(st.session_state.diagnosis_result.get("prescription", "⏳ 처방전 생성 중..."))
     
