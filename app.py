@@ -13,7 +13,6 @@ try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except:
     st.error("⚠️ API 키를 설정해주세요. (st.secrets['GEMINI_API_KEY'])")
-    # API 키가 없어도 UI는 볼 수 있도록 st.stop()은 제거
     
 if "GEMINI_API_KEY" in st.secrets:
     try:
@@ -25,7 +24,7 @@ if "GEMINI_API_KEY" in st.secrets:
         MODEL_AVAILABLE = False
 else:
     MODEL_AVAILABLE = False
-    
+
 # Session State 초기화
 if "step" not in st.session_state:
     st.session_state.step = "접수"
@@ -114,7 +113,7 @@ SYSTEM_PROMPT = """
 4. **근거 기반**: 수치 없는 일반론 금지
 """
 
-# 사이드바 - 질문 선택
+# 사이드바
 with st.sidebar:
     st.markdown("""
         <div style='background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); padding: 1.5rem; border-radius: 10px; color: white; margin-bottom: 1.5rem; text-align: center;'>
@@ -126,10 +125,9 @@ with st.sidebar:
     st.markdown("### 📋 사전 질문 선택")
     st.caption("아래 질문을 클릭하여 진료를 시작하세요")
     
-    # st.button을 사용하여 변수에 할당 (오류 수정)
-    q1 = st.button("질문 1: 카페 고객 타겟팅 (유동/보통)", key="btn_q1", use_container_width=True)
-    q2 = st.button("질문 2: 재방문율 개선 (거주/보통)", key="btn_q2", use_container_width=True)
-    q3 = st.button("질문 3: 요식업 문제 해결 (직장/낮음)", key="btn_q3", use_container_width=True)
+    q1 = st.button("질문 1: 카페 고객 타겟팅", key="btn_q1", use_container_width=True)
+    q2 = st.button("질문 2: 재방문율 개선", key="btn_q2", use_container_width=True)
+    q3 = st.button("질문 3: 요식업 문제 해결", key="btn_q3", use_container_width=True)
 
     if q1:
         st.session_state.selected_question = 1
@@ -143,7 +141,6 @@ with st.sidebar:
         }
         st.rerun()
 
-    
     if q2:
         st.session_state.selected_question = 2
         st.session_state.step = "접수"
@@ -167,14 +164,8 @@ with st.sidebar:
             "concern": "매장의 현재 가장 큰 문제점을 알고 싶고 이를 보완할 마케팅 아이디어와 근거를 제시해줘"
         }
         st.rerun()
-
-
     
     st.markdown("---")
-    
-    # ----------------------------------------------------
-    # 요청에 따라 신한카드 데이터 요약 문구 삭제 완료
-    # ----------------------------------------------------
     
     if st.session_state.step != "접수":
         st.markdown("---")
@@ -268,12 +259,7 @@ if st.session_state.step == "접수":
     
     concern = st.text_area(
         "😰 현재 겪고 있는 고민을 작성해주세요",
-        placeholder="""예시:
-- 손님은 많은데 단골이 안 생겨요
-- 재방문율이 너무 낮아요 (30% 이하)
-- 점심 시간대 매출이 약해요
-- 여름/겨울에 매출이 떨어져요
-- 어떤 고객층을 타겟해야 할지 모르겠어요""",
+        placeholder="예시: 손님은 많은데 단골이 안 생겨요 / 재방문율이 너무 낮아요",
         height=120,
         value=initial_store_info.get("concern", "")
     )
@@ -297,7 +283,7 @@ if st.session_state.step == "접수":
             }
             
             if not MODEL_AVAILABLE:
-                 st.error("⚠️ API 키가 설정되지 않아 진단 기능을 사용할 수 없습니다. API 키를 설정해주세요.")
+                 st.error("⚠️ API 키가 설정되지 않아 진단 기능을 사용할 수 없습니다.")
             else:
                 with st.spinner("🔬 검사 및 초기 진단 중..."):
                     question_context = ""
@@ -328,7 +314,7 @@ if st.session_state.step == "접수":
                     ### 1. 상권 유형 분석
                     [위치 및 상권 특성 기반 예상 고객 구성]
                     - 유동/거주/직장 비율 예상
-                    - 신한카드 데이터 매칭 (예: 유동형(70개, 38.5%)에 해당)
+                    - 신한카드 데이터 매칭
                     
                     ### 2. 핵심 문제 진단
                     [고민에 기반한 3가지 주요 문제점 + 데이터 근거]
@@ -467,6 +453,7 @@ elif st.session_state.step == "진료":
                         elif st.session_state.store_info.get('question_type') == 3:
                             question_requirement = "이 처방전은 요식업의 가장 큰 문제점 분석과 해결방안을 중심으로 작성하세요."
                         
+                        # 처방전 Prompt 완성
                         prescription_prompt = f"""
                         {SYSTEM_PROMPT}
                         
@@ -546,11 +533,8 @@ elif st.session_state.step == "진료":
 # 3단계: 처방전
 elif st.session_state.step == "처방전":
     
-    # ----------------------------------------------------
-    # 이 부분이 오류가 난 HTML 테이블 부분입니다. 
-    # 'unsafe_allow_html=True'가 확실히 적용되어 있습니다. (이전 코드와 동일)
-    # ----------------------------------------------------
-    st.markdown(f"""
+    # HTML 코드 블록 (환자 정보 및 빅데이터 분석 배너)
+    prescription_header_html = f"""
         <div style='border: 3px solid #2E7D32; padding: 2rem; border-radius: 10px; background: white; margin-bottom: 2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>
             <div style='text-align: center; margin-bottom: 1.5rem;'>
                 <div style='font-size: 3rem; margin-bottom: 0.5rem;'>🏥</div>
@@ -582,7 +566,8 @@ elif st.session_state.step == "처방전":
                 <span style='color: #558B2F; font-weight: bold;'>📊 신한카드 빅데이터 기반 분석</span>
             </div>
         </div>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(prescription_header_html, unsafe_allow_html=True) # HTML 렌더링을 위해 unsafe_allow_html=True 사용
     
     with st.container(border=True):
         st.markdown(st.session_state.diagnosis_result.get("prescription", "⏳ 처방전 생성 중..."))
