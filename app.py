@@ -116,38 +116,47 @@ with st.sidebar:
     st.markdown("### 📋 사전 질문 선택")
     st.caption("아래 질문을 클릭하여 진료를 시작하세요")
     
-    q1 = st.button(
-        "❓ 질문 1: 고객 타겟팅\n카페의 주요 방문 고객 특성에 따른 마케팅 채널 추천",
-        use_container_width=True,
-        key="q1_btn"
-    )
-    
-    q2 = st.button(
-        "❓ 질문 2: 재방문율 개선\n재방문률을 높일 수 있는 마케팅 아이디어와 근거 제시",
-        use_container_width=True,
-        key="q2_btn"
-    )
-    
-    q3 = st.button(
-        "❓ 질문 3: 요식업 문제해결\n현재 가장 큰 문제점과 보완 마케팅 아이디어",
-        use_container_width=True,
-        key="q3_btn"
-    )
-    
     if q1:
-        st.session_state.selected_question = 1
-        st.session_state.step = "접수"
-        st.rerun()
+    st.session_state.selected_question = 1
+    st.session_state.step = "접수"
     
-    if q2:
-        st.session_state.selected_question = 2
-        st.session_state.step = "접수"
-        st.rerun()
+    # 질문 1 기본값 자동 세팅
+    st.session_state.store_info = {
+        "business_type": "카페",
+        "location_detail": "역세권/대로변 (유동인구 많음)",
+        "sales_level": "보통 (업종 평균 수준)",
+        "open_period": "1년~3년",
+        "concern": "고객 타겟팅 및 홍보 채널 추천이 필요해"
+    }
+    st.rerun()
+
     
-    if q3:
-        st.session_state.selected_question = 3
-        st.session_state.step = "접수"
-        st.rerun()
+   if q2:
+    st.session_state.selected_question = 2
+    st.session_state.step = "접수"
+    
+    st.session_state.store_info = {
+        "location_detail": "주택가/골목 (거주민 중심)",
+        "sales_level": "보통 (업종 평균 수준)",
+        "open_period": "1년~3년",
+        "concern": "재방문율이 낮아 개선 전략 필요해"
+    }
+    st.rerun()
+
+if q3:
+    st.session_state.selected_question = 3
+    st.session_state.step = "접수"
+    
+    st.session_state.store_info = {
+        "business_type": "한식-일반",
+        "location_detail": "오피스/업무지구 (직장인 중심)",
+        "sales_level": "낮음 (업종 평균 이하)",
+        "open_period": "3개월~1년",
+        "concern": "매장의 현재 가장 큰 문제점을 알고 싶고 이를 보완할 마케팅 아이디어와 근거를 제시해줘"
+    }
+    st.rerun()
+
+
     
     st.markdown("---")
     
