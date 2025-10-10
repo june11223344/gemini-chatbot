@@ -19,7 +19,6 @@ except:
 # 모델 호출 시 오류가 날 수 있으므로, 실제 환경에서는 st.stop()을 유지해야 합니다.
 if "GEMINI_API_KEY" not in st.secrets:
     # 디버깅/테스트를 위해 가짜 키로 대체하거나, 실제 실행을 멈춤
-    # 이 예시에서는 오류 방지를 위해 임시로 설정하지 않고 진행
     pass
 else:
     genai.configure(api_key=api_key)
@@ -174,13 +173,9 @@ with st.sidebar:
     
     st.markdown("---")
     
-    st.markdown("### 📊 데이터 기반")
-    st.success("""
-    **신한카드 빅데이터**
-    - 카페 분석: 182개 매장
-    - 한식 분석: 32,522개 매점 (Note: 한식 관련 데이터는 SYSTEM_PROMPT에 상세 정보 없음)
-    - 기간: 2024년 5~12월
-    """)
+    # ----------------------------------------------------
+    # 수정된 부분: 이전에 st.markdown("### 📊 데이터 기반") 아래에 있던 st.success() 문구 삭제
+    # ----------------------------------------------------
     
     if st.session_state.step != "접수":
         st.markdown("---")
