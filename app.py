@@ -11,11 +11,19 @@ st.set_page_config(
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except:
-    st.error("⚠️ API 키를 설정해주세요.")
-    st.stop()
+    # 사용자 편의를 위해 st.stop() 대신 안내 메시지 출력
+    st.error("⚠️ API 키를 설정해주세요. (st.secrets['GEMINI_API_KEY'])")
+    #st.stop() # 실제 배포 시에는 st.stop() 필요
 
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.0-flash-exp')
+# API 키가 없으면, 임시로 설정하지 않고 건너뛰어 UI만 보게 할 수 있으나,
+# 모델 호출 시 오류가 날 수 있으므로, 실제 환경에서는 st.stop()을 유지해야 합니다.
+if "GEMINI_API_KEY" not in st.secrets:
+    # 디버깅/테스트를 위해 가짜 키로 대체하거나, 실제 실행을 멈춤
+    # 이 예시에서는 오류 방지를 위해 임시로 설정하지 않고 진행
+    pass
+else:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
 if "step" not in st.session_state:
     st.session_state.step = "접수"
@@ -57,7 +65,7 @@ SYSTEM_PROMPT = """
   - 매출금액 비율: **120%** (가장 낮음)
   - 유동 고객: 53%
   - 상태: 생존 위기
-  
+ 
 - **체험형** (29개, 15.9%): 재방문↓ 신규↑
   - 매출금액 비율: **210%**
   - 유동 고객: **57%** (최고)
@@ -116,45 +124,51 @@ with st.sidebar:
     st.markdown("### 📋 사전 질문 선택")
     st.caption("아래 질문을 클릭하여 진료를 시작하세요")
     
+    # 수정된 부분: st.button을 사용하여 변수에 할당
+    q1 = st.button("질문 1: 카페 고객 타겟팅 (유동/보통)", key="btn_q1", use_container_width=True)
+    q2 = st.button("질문 2: 재방문율 개선 (거주/보통)", key="btn_q2", use_container_width=True)
+    q3 = st.button("질문 3: 요식업 문제 해결 (직장/낮음)", key="btn_q3", use_container_width=True)
+
     if q1:
-    st.session_state.selected_question = 1
-    st.session_state.step = "접수"
-    
-    # 질문 1 기본값 자동 세팅
-    st.session_state.store_info = {
-        "business_type": "카페",
-        "location_detail": "역세권/대로변 (유동인구 많음)",
-        "sales_level": "보통 (업종 평균 수준)",
-        "open_period": "1년~3년",
-        "concern": "고객 타겟팅 및 홍보 채널 추천이 필요해"
-    }
-    st.rerun()
+        st.session_state.selected_question = 1
+        st.session_state.step = "접수"
+        
+        # 질문 1 기본값 자동 세팅
+        st.session_state.store_info = {
+            "business_type": "카페",
+            "location_detail": "역세권/대로변 (유동인구 많음)",
+            "sales_level": "보통 (업종 평균 수준)",
+            "open_period": "1년~3년",
+            "concern": "고객 타겟팅 및 홍보 채널 추천이 필요해"
+        }
+        st.rerun()
 
     
-   if q2:
-    st.session_state.selected_question = 2
-    st.session_state.step = "접수"
-    
-    st.session_state.store_info = {
-        "location_detail": "주택가/골목 (거주민 중심)",
-        "sales_level": "보통 (업종 평균 수준)",
-        "open_period": "1년~3년",
-        "concern": "재방문율이 낮아 개선 전략 필요해"
-    }
-    st.rerun()
+    if q2:
+        st.session_state.selected_question = 2
+        st.session_state.step = "접수"
+        
+        st.session_state.store_info = {
+            "business_type": "카페", # q2의 업종 정보 누락되어 추가함 (카페 데이터가 많으므로)
+            "location_detail": "주택가/골목 (거주민 중심)",
+            "sales_level": "보통 (업종 평균 수준)",
+            "open_period": "1년~3년",
+            "concern": "재방문율이 낮아 개선 전략 필요해"
+        }
+        st.rerun()
 
-if q3:
-    st.session_state.selected_question = 3
-    st.session_state.step = "접수"
-    
-    st.session_state.store_info = {
-        "business_type": "한식-일반",
-        "location_detail": "오피스/업무지구 (직장인 중심)",
-        "sales_level": "낮음 (업종 평균 이하)",
-        "open_period": "3개월~1년",
-        "concern": "매장의 현재 가장 큰 문제점을 알고 싶고 이를 보완할 마케팅 아이디어와 근거를 제시해줘"
-    }
-    st.rerun()
+    if q3:
+        st.session_state.selected_question = 3
+        st.session_state.step = "접수"
+        
+        st.session_state.store_info = {
+            "business_type": "한식-일반",
+            "location_detail": "오피스/업무지구 (직장인 중심)",
+            "sales_level": "낮음 (업종 평균 이하)",
+            "open_period": "3개월~1년",
+            "concern": "매장의 현재 가장 큰 문제점을 알고 싶고 이를 보완할 마케팅 아이디어와 근거를 제시해줘"
+        }
+        st.rerun()
 
 
     
@@ -164,7 +178,7 @@ if q3:
     st.success("""
     **신한카드 빅데이터**
     - 카페 분석: 182개 매장
-    - 한식 분석: 32,522개 매점
+    - 한식 분석: 32,522개 매점 (Note: 한식 관련 데이터는 SYSTEM_PROMPT에 상세 정보 없음)
     - 기간: 2024년 5~12월
     """)
     
@@ -197,8 +211,11 @@ if st.session_state.step == "접수":
         3: "질문 3: 요식업 문제 해결"
     }
     
+    # 사전 질문 선택 시, store_info를 바탕으로 입력 필드에 초기값 설정
+    initial_store_info = st.session_state.store_info
+    
     if st.session_state.selected_question:
-        st.info(f"✅ 선택된 진료: {question_titles[st.session_state.selected_question]}")
+        st.info(f"✅ 선택된 진료: {question_titles[st.session_state.selected_question]} (자동 입력된 정보를 확인/수정 후 '진료 접수하기'를 눌러주세요)")
     
     st.subheader("가맹점 기본 정보를 입력해주세요")
     
@@ -210,42 +227,50 @@ if st.session_state.step == "접수":
         region_choice = st.selectbox(
             "🗺️ 지역 선택",
             ["선택하세요", "서울 성동구", "서울 강남구", "서울 강서구", "서울 마포구", 
-             "서울 종로구", "부산", "대구", "대전", "인천", "광주", "기타 지역"]
+             "서울 종로구", "부산", "대구", "대전", "인천", "광주", "기타 지역"],
+            index=1 if "region" not in initial_store_info else (["선택하세요", "서울 성동구", "서울 강남구", "서울 강서구", "서울 마포구", "서울 종로구", "부산", "대구", "대전", "인천", "광주", "기타 지역"].index(initial_store_info.get("region", "선택하세요")))
         )
         
+        location_options = ["선택하세요", "성수동1가", "성수동2가", "서울숲길", "왕십리", "행당동", "금호동", "옥수동", "마장동", "응봉동"]
         if region_choice == "서울 성동구":
             location = st.selectbox(
                 "📍 상세 위치 (성동구)",
-                ["선택하세요", "성수동1가", "성수동2가", "서울숲길", "왕십리", "행당동", 
-                 "금호동", "옥수동", "마장동", "응봉동"]
+                location_options,
+                index=location_options.index(initial_store_info.get("location", "선택하세요")) if initial_store_info.get("location") in location_options else 0
             )
         elif region_choice and region_choice != "선택하세요":
-            location = st.text_input("📍 상세 위치 직접 입력", placeholder="예: 강남구 역삼동")
+            location = st.text_input("📍 상세 위치 직접 입력", placeholder="예: 강남구 역삼동", value=initial_store_info.get("location", ""))
         else:
             location = "선택하세요"
         
+        business_type_options = ["선택하세요", "카페", "한식-육류/고기", "한식-일반", "일식", "중식", "양식", "치킨", "분식", "베이커리", "기타"]
         business_type = st.selectbox(
             "🍽️ 업종",
-            ["선택하세요", "카페", "한식-육류/고기", "한식-일반", "일식", "중식", 
-             "양식", "치킨", "분식", "베이커리", "기타"]
+            business_type_options,
+            index=business_type_options.index(initial_store_info.get("business_type", "선택하세요")) if initial_store_info.get("business_type") in business_type_options else 0
         )
         
     with col2:
+        location_detail_options = ["역세권/대로변 (유동인구 많음)", "주택가/골목 (거주민 중심)", "오피스/업무지구 (직장인 중심)"]
+        location_detail_default_index = location_detail_options.index(initial_store_info.get("location_detail", "역세권/대로변 (유동인구 많음)"))
         location_detail = st.radio(
             "🏢 상권 특성",
-            ["역세권/대로변 (유동인구 많음)", "주택가/골목 (거주민 중심)", 
-             "오피스/업무지구 (직장인 중심)"]
+            location_detail_options,
+            index=location_detail_default_index
         )
         
+        open_period_options = ["선택하세요", "3개월 미만", "3개월~1년", "1년~3년", "3년 이상"]
         open_period = st.selectbox(
             "📅 운영 기간",
-            ["선택하세요", "3개월 미만", "3개월~1년", "1년~3년", "3년 이상"]
+            open_period_options,
+            index=open_period_options.index(initial_store_info.get("open_period", "선택하세요")) if initial_store_info.get("open_period") in open_period_options else 0
         )
         
+        sales_level_options = ["선택하세요", "낮음 (업종 평균 이하)", "보통 (업종 평균 수준)", "높음 (업종 평균 이상)"]
         sales_level = st.selectbox(
             "💰 매출 수준",
-            ["선택하세요", "낮음 (업종 평균 이하)", "보통 (업종 평균 수준)", 
-             "높음 (업종 평균 이상)"]
+            sales_level_options,
+            index=sales_level_options.index(initial_store_info.get("sales_level", "선택하세요")) if initial_store_info.get("sales_level") in sales_level_options else 0
         )
     
     concern = st.text_area(
@@ -256,7 +281,8 @@ if st.session_state.step == "접수":
 - 점심 시간대 매출이 약해요
 - 여름/겨울에 매출이 떨어져요
 - 어떤 고객층을 타겟해야 할지 모르겠어요""",
-        height=120
+        height=120,
+        value=initial_store_info.get("concern", "")
     )
     
     if st.button("🏥 진료 접수하기", type="primary", use_container_width=True):
@@ -274,56 +300,61 @@ if st.session_state.step == "접수":
                 "sales_level": sales_level,
                 "concern": concern,
                 "date": datetime.now().strftime("%Y년 %m월 %d일"),
-                "question_type": st.session_state.selected_question
+                "question_type": st.session_state.selected_question # 질문 선택을 하지 않은 경우 None이 될 수 있음
             }
             
-            with st.spinner("🔬 검사 및 초기 진단 중..."):
-                question_context = ""
-                if st.session_state.selected_question == 1:
-                    question_context = "\n\n[중요] 이 진단은 '카페의 주요 고객 특성에 따른 마케팅 채널 추천'에 특화되어야 합니다."
-                elif st.session_state.selected_question == 2:
-                    question_context = "\n\n[중요] 이 진단은 '재방문율 개선'에 특화되어야 합니다."
-                elif st.session_state.selected_question == 3:
-                    question_context = "\n\n[중요] 이 진단은 '요식업 문제점 분석'에 특화되어야 합니다."
-                
-                initial_prompt = f"""
-                {SYSTEM_PROMPT}
-                {question_context}
-                
-                가맹점 정보:
-                - 가맹점명: {store_name}
-                - 지역: {region_choice} - {location}
-                - 상권 특성: {location_detail}
-                - 업종: {business_type}
-                - 운영 기간: {open_period}
-                - 매출 수준: {sales_level}
-                - 주 증상: {concern}
-                
-                다음 형식으로 초기 진단을 작성하세요:
-                
-                ## 🔬 초기 검사 결과
-                
-                ### 1. 상권 유형 분석
-                [위치 및 상권 특성 기반 예상 고객 구성]
-                - 유동/거주/직장 비율 예상
-                - 신한카드 데이터 매칭
-                
-                ### 2. 핵심 문제 진단
-                [고민에 기반한 3가지 주요 문제점 + 데이터 근거]
-                
-                ### 3. 즉시 처방 필요 사항
-                [우선순위 높은 액션 3개]
-                
-                모든 분석에 신한카드 데이터의 구체적 수치를 포함하세요.
-                """
-                
-                try:
-                    response = model.generate_content(initial_prompt)
-                    st.session_state.diagnosis_result["initial"] = response.text
-                    st.session_state.step = "진료"
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"진단 오류: {str(e)}")
+            # API 키 유무 확인 (모델 호출 전에)
+            if "GEMINI_API_KEY" not in st.secrets:
+                 st.error("⚠️ API 키가 설정되지 않아 진단 기능을 사용할 수 없습니다. 사이드바의 'API 키를 설정해주세요.' 메시지를 확인하세요.")
+                 # st.stop()
+            else:
+                with st.spinner("🔬 검사 및 초기 진단 중..."):
+                    question_context = ""
+                    if st.session_state.selected_question == 1:
+                        question_context = "\n\n[중요] 이 진단은 '카페의 주요 고객 특성에 따른 마케팅 채널 추천'에 특화되어야 합니다."
+                    elif st.session_state.selected_question == 2:
+                        question_context = "\n\n[중요] 이 진단은 '재방문율 개선'에 특화되어야 합니다."
+                    elif st.session_state.selected_question == 3:
+                        question_context = "\n\n[중요] 이 진단은 '요식업 문제점 분석'에 특화되어야 합니다."
+                    
+                    initial_prompt = f"""
+                    {SYSTEM_PROMPT}
+                    {question_context}
+                    
+                    가맹점 정보:
+                    - 가맹점명: {store_name}
+                    - 지역: {region_choice} - {location}
+                    - 상권 특성: {location_detail}
+                    - 업종: {business_type}
+                    - 운영 기간: {open_period}
+                    - 매출 수준: {sales_level}
+                    - 주 증상: {concern}
+                    
+                    다음 형식으로 초기 진단을 작성하세요:
+                    
+                    ## 🔬 초기 검사 결과
+                    
+                    ### 1. 상권 유형 분석
+                    [위치 및 상권 특성 기반 예상 고객 구성]
+                    - 유동/거주/직장 비율 예상
+                    - 신한카드 데이터 매칭 (예: 유동형(70개, 38.5%)에 해당)
+                    
+                    ### 2. 핵심 문제 진단
+                    [고민에 기반한 3가지 주요 문제점 + 데이터 근거]
+                    
+                    ### 3. 즉시 처방 필요 사항
+                    [우선순위 높은 액션 3개]
+                    
+                    모든 분석에 신한카드 데이터의 구체적 수치를 포함하세요.
+                    """
+                    
+                    try:
+                        response = model.generate_content(initial_prompt)
+                        st.session_state.diagnosis_result["initial"] = response.text
+                        st.session_state.step = "진료"
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"진단 오류: {str(e)}")
         else:
             st.error("⚠️ 모든 필수 항목을 입력해주세요!")
 
@@ -338,7 +369,7 @@ elif st.session_state.step == "진료":
     st.markdown(f"""
         <div style='background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); padding: 1.5rem; border-radius: 10px; border-left: 5px solid #4CAF50; margin-bottom: 1.5rem;'>
             <h2 style='margin: 0; color: #1B5E20;'>🩺 진료실</h2>
-            <p style='margin: 0.5rem 0 0 0; color: #2E7D32; font-size: 1rem;'><strong>{st.session_state.store_info['store_name']}</strong> | {question_titles.get(st.session_state.store_info['question_type'], '일반 진료')}</p>
+            <p style='margin: 0.5rem 0 0 0; color: #2E7D32; font-size: 1rem;'><strong>{st.session_state.store_info.get('store_name', '가맹점')}</strong> | {question_titles.get(st.session_state.store_info.get('question_type'), '일반 진료')}</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -347,17 +378,17 @@ elif st.session_state.step == "진료":
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"""
-            **가맹점명:** {info['store_name']}  
-            **업종:** {info['business_type']}  
-            **위치:** {info['region']} - {info['location']}  
-            **상권 특성:** {info['location_detail']}
+            **가맹점명:** {info.get('store_name', 'N/A')}  
+            **업종:** {info.get('business_type', 'N/A')}  
+            **위치:** {info.get('region', 'N/A')} - {info.get('location', 'N/A')}  
+            **상권 특성:** {info.get('location_detail', 'N/A')}
             """)
         with col2:
             st.markdown(f"""
-            **운영 기간:** {info['open_period']}  
-            **매출 수준:** {info['sales_level']}  
-            **접수일:** {info['date']}  
-            **고민:** {info['concern']}
+            **운영 기간:** {info.get('open_period', 'N/A')}  
+            **매출 수준:** {info.get('sales_level', 'N/A')}  
+            **접수일:** {info.get('date', 'N/A')}  
+            **고민:** {info.get('concern', 'N/A')}
             """)
     
     st.markdown("### 📊 초기 진단 결과")
@@ -368,7 +399,7 @@ elif st.session_state.step == "진료":
     st.markdown("### 💬 전문의 상담")
     
     if len(st.session_state.messages) == 0:
-        initial_msg = f"""안녕하세요, **{st.session_state.store_info['store_name']}** 점주님!
+        initial_msg = f"""안녕하세요, **{st.session_state.store_info.get('store_name', '점주')}** 점주님!
 
 초기 진단을 완료했습니다. 신한카드 빅데이터 기반으로 더 구체적인 마케팅 전략을 상담해드리겠습니다.
 
@@ -384,44 +415,48 @@ elif st.session_state.step == "진료":
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         
-        try:
-            question_focus = ""
-            if st.session_state.store_info['question_type'] == 1:
-                question_focus = "고객 타겟팅 및 마케팅 채널 추천에 집중하세요."
-            elif st.session_state.store_info['question_type'] == 2:
-                question_focus = "재방문율 개선 전략에 집중하세요."
-            elif st.session_state.store_info['question_type'] == 3:
-                question_focus = "요식업 문제 분석 및 해결방안에 집중하세요."
-            
-            context = f"""
-            {SYSTEM_PROMPT}
-            
-            {question_focus}
-            
-            가맹점 정보:
-            - 이름: {st.session_state.store_info['store_name']}
-            - 업종: {st.session_state.store_info['business_type']}
-            - 위치: {st.session_state.store_info['region']} - {st.session_state.store_info['location']} ({st.session_state.store_info['location_detail']})
-            - 운영: {st.session_state.store_info['open_period']}
-            - 매출: {st.session_state.store_info['sales_level']}
-            - 고민: {st.session_state.store_info['concern']}
-            
-            초기 진단:
-            {st.session_state.diagnosis_result.get('initial', '')}
-            
-            점주 질문: {prompt}
-            
-            반드시 신한카드 데이터의 구체적 수치(상관계수, 비율, 매장수, %p)를 포함하여 답변하세요.
-            """
-            
-            response = model.generate_content(context)
-            answer = response.text
-            
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-            with st.chat_message("assistant", avatar="🏥"):
-                st.markdown(answer)
-        except Exception as e:
-            st.error(f"⚠️ 상담 중 오류: {str(e)}")
+        # 모델 호출 시 API 키 유무를 다시 한 번 체크
+        if "GEMINI_API_KEY" not in st.secrets:
+             st.error("⚠️ API 키가 설정되지 않아 상담 기능을 사용할 수 없습니다.")
+        else:
+            try:
+                question_focus = ""
+                if st.session_state.store_info.get('question_type') == 1:
+                    question_focus = "고객 타겟팅 및 마케팅 채널 추천에 집중하세요."
+                elif st.session_state.store_info.get('question_type') == 2:
+                    question_focus = "재방문율 개선 전략에 집중하세요."
+                elif st.session_state.store_info.get('question_type') == 3:
+                    question_focus = "요식업 문제 분석 및 해결방안에 집중하세요."
+                
+                context = f"""
+                {SYSTEM_PROMPT}
+                
+                {question_focus}
+                
+                가맹점 정보:
+                - 이름: {st.session_state.store_info.get('store_name', 'N/A')}
+                - 업종: {st.session_state.store_info.get('business_type', 'N/A')}
+                - 위치: {st.session_state.store_info.get('region', 'N/A')} - {st.session_state.store_info.get('location', 'N/A')} ({st.session_state.store_info.get('location_detail', 'N/A')})
+                - 운영: {st.session_state.store_info.get('open_period', 'N/A')}
+                - 매출: {st.session_state.store_info.get('sales_level', 'N/A')}
+                - 고민: {st.session_state.store_info.get('concern', 'N/A')}
+                
+                초기 진단:
+                {st.session_state.diagnosis_result.get('initial', '')}
+                
+                점주 질문: {prompt}
+                
+                반드시 신한카드 데이터의 구체적 수치(상관계수, 비율, 매장수, %p)를 포함하여 답변하세요.
+                """
+                
+                response = model.generate_content(context)
+                answer = response.text
+                
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+                with st.chat_message("assistant", avatar="🏥"):
+                    st.markdown(answer)
+            except Exception as e:
+                st.error(f"⚠️ 상담 중 오류: {str(e)}")
     
     st.markdown("---")
     col1, col2 = st.columns([3, 1])
@@ -429,91 +464,95 @@ elif st.session_state.step == "진료":
         st.info("💊 충분한 상담이 이루어졌다면 최종 처방전을 발급받으세요!")
     with col2:
         if st.button("📋 처방전 발급", type="primary", use_container_width=True):
-            with st.spinner("📝 처방전 작성 중..."):
-                try:
-                    question_requirement = ""
-                    if st.session_state.store_info['question_type'] == 1:
-                        question_requirement = "이 처방전은 카페의 고객 특성에 따른 마케팅 채널 추천을 중심으로 작성하세요."
-                    elif st.session_state.store_info['question_type'] == 2:
-                        question_requirement = "이 처방전은 재방문율 개선에 필요한 구체적 전략을 중심으로 작성하세요."
-                    elif st.session_state.store_info['question_type'] == 3:
-                        question_requirement = "이 처방전은 요식업의 가장 큰 문제점 분석과 해결방안을 중심으로 작성하세요."
-                    
-                    prescription_prompt = f"""
-                    {SYSTEM_PROMPT}
-                    
-                    {question_requirement}
-                    
-                    다음 가맹점의 최종 마케팅 처방전을 작성하세요:
-                    
-                    가맹점 정보:
-                    - 이름: {st.session_state.store_info['store_name']}
-                    - 업종: {st.session_state.store_info['business_type']}
-                    - 위치: {st.session_state.store_info['region']} - {st.session_state.store_info['location']}
-                    - 특성: {st.session_state.store_info['location_detail']}
-                    - 운영: {st.session_state.store_info['open_period']}
-                    - 매출: {st.session_state.store_info['sales_level']}
-                    - 고민: {st.session_state.store_info['concern']}
-                    
-                    초기 진단:
-                    {st.session_state.diagnosis_result.get('initial', '')}
-                    
-                    상담 기록:
-                    {chr(10).join([f"- {msg['role']}: {msg['content'][:200]}..." for msg in st.session_state.messages[-10:]])}
-                    
-                    다음 형식의 의료 처방전을 작성하세요:
-                    
-                    # 💊 마케팅 처방전
-                    
-                    ## 📋 환자 정보
-                    - 환자명: {st.session_state.store_info['store_name']}
-                    - 업종: {st.session_state.store_info['business_type']}
-                    - 위치: {st.session_state.store_info['region']} - {st.session_state.store_info['location']}
-                    - 발급일: {st.session_state.store_info['date']}
-                    
-                    ## 🔬 종합 진단
-                    [상권 유형, 고객 구조, 핵심 문제 3가지를 신한카드 데이터로 분석]
-                    
-                    ## 💊 처방 내역
-                    
-                    ### 우선순위 1위 ⭐⭐⭐
-                    **처방명:** [구체적 전략명]
-                    **목표:** [재방문율/매출 증가 등 수치 목표]
-                    **근거:** 신한카드 데이터 [상관계수, 비율, 사례]
-                    **실행 방법:**
-                    1. [구체적 실행 1]
-                    2. [구체적 실행 2]
-                    3. [구체적 실행 3]
-                    **예상 효과:** [구체적 수치]
-                    
-                    ### 우선순위 2위 ⭐⭐
-                    (동일 형식)
-                    
-                    ### 우선순위 3위 ⭐
-                    (동일 형식)
-                    
-                    ## 📊 3개월 예상 성과
-                    | 지표 | 현재 | 목표 | 개선율 |
-                    |---|---|---|---|
-                    | 재방문율 | XX% | XX% | +XX%p |
-                    | 매출 | 현재 | +XX% | XX만원 |
-                    
-                    ## ⚠️ 복약 지도 및 주의사항
-                    [주의할 점 3가지 + 데이터 근거]
-                    
-                    ---
-                    
-                    **처방의:** AI 마케팅 전문의
-                    **발급일:** {datetime.now().strftime('%Y년 %m월 %d일')}
-                    **병원명:** 상권 마케팅 처방 클리닉
-                    """
-                    
-                    prescription = model.generate_content(prescription_prompt)
-                    st.session_state.diagnosis_result["prescription"] = prescription.text
-                    st.session_state.step = "처방전"
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"⚠️ 처방전 발급 오류: {str(e)}")
+            # API 키 유무를 다시 한 번 체크
+            if "GEMINI_API_KEY" not in st.secrets:
+                 st.error("⚠️ API 키가 설정되지 않아 처방전 기능을 사용할 수 없습니다.")
+            else:
+                with st.spinner("📝 처방전 작성 중..."):
+                    try:
+                        question_requirement = ""
+                        if st.session_state.store_info.get('question_type') == 1:
+                            question_requirement = "이 처방전은 카페의 고객 특성에 따른 마케팅 채널 추천을 중심으로 작성하세요."
+                        elif st.session_state.store_info.get('question_type') == 2:
+                            question_requirement = "이 처방전은 재방문율 개선에 필요한 구체적 전략을 중심으로 작성하세요."
+                        elif st.session_state.store_info.get('question_type') == 3:
+                            question_requirement = "이 처방전은 요식업의 가장 큰 문제점 분석과 해결방안을 중심으로 작성하세요."
+                        
+                        prescription_prompt = f"""
+                        {SYSTEM_PROMPT}
+                        
+                        {question_requirement}
+                        
+                        다음 가맹점의 최종 마케팅 처방전을 작성하세요:
+                        
+                        가맹점 정보:
+                        - 이름: {st.session_state.store_info.get('store_name', 'N/A')}
+                        - 업종: {st.session_state.store_info.get('business_type', 'N/A')}
+                        - 위치: {st.session_state.store_info.get('region', 'N/A')} - {st.session_state.store_info.get('location', 'N/A')}
+                        - 특성: {st.session_state.store_info.get('location_detail', 'N/A')}
+                        - 운영: {st.session_state.store_info.get('open_period', 'N/A')}
+                        - 매출: {st.session_state.store_info.get('sales_level', 'N/A')}
+                        - 고민: {st.session_state.store_info.get('concern', 'N/A')}
+                        
+                        초기 진단:
+                        {st.session_state.diagnosis_result.get('initial', '')}
+                        
+                        상담 기록:
+                        {chr(10).join([f"- {msg['role']}: {msg['content'][:200]}..." for msg in st.session_state.messages[-10:]])}
+                        
+                        다음 형식의 의료 처방전을 작성하세요:
+                        
+                        # 💊 마케팅 처방전
+                        
+                        ## 📋 환자 정보
+                        - 환자명: {st.session_state.store_info.get('store_name', 'N/A')}
+                        - 업종: {st.session_state.store_info.get('business_type', 'N/A')}
+                        - 위치: {st.session_state.store_info.get('region', 'N/A')} - {st.session_state.store_info.get('location', 'N/A')}
+                        - 발급일: {st.session_state.store_info.get('date', 'N/A')}
+                        
+                        ## 🔬 종합 진단
+                        [상권 유형, 고객 구조, 핵심 문제 3가지를 신한카드 데이터로 분석]
+                        
+                        ## 💊 처방 내역
+                        
+                        ### 우선순위 1위 ⭐⭐⭐
+                        **처방명:** [구체적 전략명]
+                        **목표:** [재방문율/매출 증가 등 수치 목표]
+                        **근거:** 신한카드 데이터 [상관계수, 비율, 사례]
+                        **실행 방법:**
+                        1. [구체적 실행 1]
+                        2. [구체적 실행 2]
+                        3. [구체적 실행 3]
+                        **예상 효과:** [구체적 수치]
+                        
+                        ### 우선순위 2위 ⭐⭐
+                        (동일 형식)
+                        
+                        ### 우선순위 3위 ⭐
+                        (동일 형식)
+                        
+                        ## 📊 3개월 예상 성과
+                        | 지표 | 현재 | 목표 | 개선율 |
+                        |---|---|---|---|
+                        | 재방문율 | XX% | XX% | +XX%p |
+                        | 매출 | XX만원 | XX만원 | +XX% |
+                        
+                        ## ⚠️ 복약 지도 및 주의사항
+                        [주의할 점 3가지 + 데이터 근거]
+                        
+                        ---
+                        
+                        **처방의:** AI 마케팅 전문의
+                        **발급일:** {datetime.now().strftime('%Y년 %m월 %d일')}
+                        **병원명:** 상권 마케팅 처방 클리닉
+                        """
+                        
+                        prescription = model.generate_content(prescription_prompt)
+                        st.session_state.diagnosis_result["prescription"] = prescription.text
+                        st.session_state.step = "처방전"
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"⚠️ 처방전 발급 오류: {str(e)}")
 
 # 3단계: 처방전
 elif st.session_state.step == "처방전":
@@ -529,19 +568,19 @@ elif st.session_state.step == "처방전":
             <table style='width: 100%; border-collapse: collapse;'>
                 <tr>
                     <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; width: 30%; color: #666;'><strong>환자명 (가맹점)</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info['store_name']}</td>
+                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info.get('store_name', 'N/A')}</td>
                     <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; width: 20%; color: #666;'><strong>차트번호</strong></td>
                     <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{datetime.now().strftime('%Y%m%d')}</td>
                 </tr>
                 <tr>
                     <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; color: #666;'><strong>업종</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info['business_type']}</td>
+                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info.get('business_type', 'N/A')}</td>
                     <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; color: #666;'><strong>발급일</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info['date']}</td>
+                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;'>{st.session_state.store_info.get('date', 'N/A')}</td>
                 </tr>
                 <tr>
                     <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0; color: #666;'><strong>위치</strong></td>
-                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;' colspan='3'>{st.session_state.store_info['region']} - {st.session_state.store_info['location']}</td>
+                    <td style='padding: 0.5rem; border-bottom: 1px solid #E0E0E0;' colspan='3'>{st.session_state.store_info.get('region', 'N/A')} - {st.session_state.store_info.get('location', 'N/A')}</td>
                 </tr>
             </table>
             
@@ -574,16 +613,22 @@ elif st.session_state.step == "처방전":
     
     with col2:
         prescription_text = st.session_state.diagnosis_result.get("prescription", "")
+        store_name = st.session_state.store_info.get('store_name', '미입력')
+        business_type = st.session_state.store_info.get('business_type', '미입력')
+        region = st.session_state.store_info.get('region', '미입력')
+        location = st.session_state.store_info.get('location', '미입력')
+        date = st.session_state.store_info.get('date', datetime.now().strftime('%Y년 %m월 %d일'))
+
         full_prescription = f"""
 ┌────────────────────────────────────────────┐
-│       상권 마케팅 처방 클리닉              │
-│    Marketing Prescription Clinic            │
+│         상권 마케팅 처방 클리닉              │
+│     Marketing Prescription Clinic            │
 └────────────────────────────────────────────┘
 
-환자명(가맹점): {st.session_state.store_info['store_name']}
-업종: {st.session_state.store_info['business_type']}
-위치: {st.session_state.store_info['region']} - {st.session_state.store_info['location']}
-발급일: {st.session_state.store_info['date']}
+환자명(가맹점): {store_name}
+업종: {business_type}
+위치: {region} - {location}
+발급일: {date}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -602,7 +647,7 @@ elif st.session_state.step == "처방전":
         st.download_button(
             label="📥 처방전 다운로드",
             data=full_prescription,
-            file_name=f"처방전_{st.session_state.store_info['store_name']}_{datetime.now().strftime('%Y%m%d')}.txt",
+            file_name=f"처방전_{store_name}_{datetime.now().strftime('%Y%m%d')}.txt",
             mime="text/plain",
             use_container_width=True
         )
