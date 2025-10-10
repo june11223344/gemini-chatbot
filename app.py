@@ -124,9 +124,9 @@ with st.sidebar:
     st.caption("아래 질문을 클릭하여 진료를 시작하세요")
     
     # 수정된 부분: st.button을 사용하여 변수에 할당
-    q1 = st.button("질문 1: 카페 고객 타겟팅 (유동/보통)", key="btn_q1", use_container_width=True)
-    q2 = st.button("질문 2: 재방문율 개선 (거주/보통)", key="btn_q2", use_container_width=True)
-    q3 = st.button("질문 3: 요식업 문제 해결 (직장/낮음)", key="btn_q3", use_container_width=True)
+    q1 = st.button("질문 1: 카페 고객 타겟팅 ", key="btn_q1", use_container_width=True)
+    q2 = st.button("질문 2: 재방문율 개선 ", key="btn_q2", use_container_width=True)
+    q3 = st.button("질문 3: 요식업 문제 해결 ", key="btn_q3", use_container_width=True)
 
     if q1:
         st.session_state.selected_question = 1
@@ -148,7 +148,6 @@ with st.sidebar:
         st.session_state.step = "접수"
         
         st.session_state.store_info = {
-            "business_type": "카페", # q2의 업종 정보 누락되어 추가함 (카페 데이터가 많으므로)
             "location_detail": "주택가/골목 (거주민 중심)",
             "sales_level": "보통 (업종 평균 수준)",
             "open_period": "1년~3년",
