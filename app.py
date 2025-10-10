@@ -8,22 +8,25 @@ st.set_page_config(
     layout="wide"
 )
 
+# API Key 설정 및 모델 초기화
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except:
-    # 사용자 편의를 위해 st.stop() 대신 안내 메시지 출력
     st.error("⚠️ API 키를 설정해주세요. (st.secrets['GEMINI_API_KEY'])")
-    #st.stop() # 실제 배포 시에는 st.stop() 필요
-
-# API 키가 없으면, 임시로 설정하지 않고 건너뛰어 UI만 보게 할 수 있으나,
-# 모델 호출 시 오류가 날 수 있으므로, 실제 환경에서는 st.stop()을 유지해야 합니다.
-if "GEMINI_API_KEY" not in st.secrets:
-    # 디버깅/테스트를 위해 가짜 키로 대체하거나, 실제 실행을 멈춤
-    pass
+    # API 키가 없어도 UI는 볼 수 있도록 st.stop()은 제거
+    
+if "GEMINI_API_KEY" in st.secrets:
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        MODEL_AVAILABLE = True
+    except Exception as e:
+        st.error(f"⚠️ 모델 초기화 오류: {e}")
+        MODEL_AVAILABLE = False
 else:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash-exp')
-
+    MODEL_AVAILABLE = False
+    
+# Session State 초기화
 if "step" not in st.session_state:
     st.session_state.step = "접수"
 if "store_info" not in st.session_state:
@@ -123,16 +126,14 @@ with st.sidebar:
     st.markdown("### 📋 사전 질문 선택")
     st.caption("아래 질문을 클릭하여 진료를 시작하세요")
     
-    # 수정된 부분: st.button을 사용하여 변수에 할당
-    q1 = st.button("질문 1: 카페 고객 타겟팅 ", key="btn_q1", use_container_width=True)
-    q2 = st.button("질문 2: 재방문율 개선 ", key="btn_q2", use_container_width=True)
-    q3 = st.button("질문 3: 요식업 문제 해결 ", key="btn_q3", use_container_width=True)
+    # st.button을 사용하여 변수에 할당 (오류 수정)
+    q1 = st.button("질문 1: 카페 고객 타겟팅 (유동/보통)", key="btn_q1", use_container_width=True)
+    q2 = st.button("질문 2: 재방문율 개선 (거주/보통)", key="btn_q2", use_container_width=True)
+    q3 = st.button("질문 3: 요식업 문제 해결 (직장/낮음)", key="btn_q3", use_container_width=True)
 
     if q1:
         st.session_state.selected_question = 1
         st.session_state.step = "접수"
-        
-        # 질문 1 기본값 자동 세팅
         st.session_state.store_info = {
             "business_type": "카페",
             "location_detail": "역세권/대로변 (유동인구 많음)",
@@ -146,8 +147,8 @@ with st.sidebar:
     if q2:
         st.session_state.selected_question = 2
         st.session_state.step = "접수"
-        
         st.session_state.store_info = {
+            "business_type": "카페", 
             "location_detail": "주택가/골목 (거주민 중심)",
             "sales_level": "보통 (업종 평균 수준)",
             "open_period": "1년~3년",
@@ -158,7 +159,6 @@ with st.sidebar:
     if q3:
         st.session_state.selected_question = 3
         st.session_state.step = "접수"
-        
         st.session_state.store_info = {
             "business_type": "한식-일반",
             "location_detail": "오피스/업무지구 (직장인 중심)",
@@ -173,7 +173,7 @@ with st.sidebar:
     st.markdown("---")
     
     # ----------------------------------------------------
-    # 수정된 부분: 이전에 st.markdown("### 📊 데이터 기반") 아래에 있던 st.success() 문구 삭제
+    # 요청에 따라 신한카드 데이터 요약 문구 삭제 완료
     # ----------------------------------------------------
     
     if st.session_state.step != "접수":
@@ -205,7 +205,6 @@ if st.session_state.step == "접수":
         3: "질문 3: 요식업 문제 해결"
     }
     
-    # 사전 질문 선택 시, store_info를 바탕으로 입력 필드에 초기값 설정
     initial_store_info = st.session_state.store_info
     
     if st.session_state.selected_question:
@@ -216,13 +215,13 @@ if st.session_state.step == "접수":
     col1, col2 = st.columns(2)
     
     with col1:
-        store_name = st.text_input("🏪 가맹점명", placeholder="예: 달구 성수점")
+        store_name = st.text_input("🏪 가맹점명", placeholder="예: 달구 성수점", value=initial_store_info.get("store_name", ""))
         
+        region_options = ["선택하세요", "서울 성동구", "서울 강남구", "서울 강서구", "서울 마포구", "서울 종로구", "부산", "대구", "대전", "인천", "광주", "기타 지역"]
         region_choice = st.selectbox(
             "🗺️ 지역 선택",
-            ["선택하세요", "서울 성동구", "서울 강남구", "서울 강서구", "서울 마포구", 
-             "서울 종로구", "부산", "대구", "대전", "인천", "광주", "기타 지역"],
-            index=1 if "region" not in initial_store_info else (["선택하세요", "서울 성동구", "서울 강남구", "서울 강서구", "서울 마포구", "서울 종로구", "부산", "대구", "대전", "인천", "광주", "기타 지역"].index(initial_store_info.get("region", "선택하세요")))
+            region_options,
+            index=region_options.index(initial_store_info.get("region", "선택하세요")) if initial_store_info.get("region") in region_options else 0
         )
         
         location_options = ["선택하세요", "성수동1가", "성수동2가", "서울숲길", "왕십리", "행당동", "금호동", "옥수동", "마장동", "응봉동"]
@@ -246,7 +245,7 @@ if st.session_state.step == "접수":
         
     with col2:
         location_detail_options = ["역세권/대로변 (유동인구 많음)", "주택가/골목 (거주민 중심)", "오피스/업무지구 (직장인 중심)"]
-        location_detail_default_index = location_detail_options.index(initial_store_info.get("location_detail", "역세권/대로변 (유동인구 많음)"))
+        location_detail_default_index = location_detail_options.index(initial_store_info.get("location_detail", "역세권/대로변 (유동인구 많음)")) if initial_store_info.get("location_detail") in location_detail_options else 0
         location_detail = st.radio(
             "🏢 상권 특성",
             location_detail_options,
@@ -294,13 +293,11 @@ if st.session_state.step == "접수":
                 "sales_level": sales_level,
                 "concern": concern,
                 "date": datetime.now().strftime("%Y년 %m월 %d일"),
-                "question_type": st.session_state.selected_question # 질문 선택을 하지 않은 경우 None이 될 수 있음
+                "question_type": st.session_state.selected_question
             }
             
-            # API 키 유무 확인 (모델 호출 전에)
-            if "GEMINI_API_KEY" not in st.secrets:
-                 st.error("⚠️ API 키가 설정되지 않아 진단 기능을 사용할 수 없습니다. 사이드바의 'API 키를 설정해주세요.' 메시지를 확인하세요.")
-                 # st.stop()
+            if not MODEL_AVAILABLE:
+                 st.error("⚠️ API 키가 설정되지 않아 진단 기능을 사용할 수 없습니다. API 키를 설정해주세요.")
             else:
                 with st.spinner("🔬 검사 및 초기 진단 중..."):
                     question_context = ""
@@ -409,8 +406,7 @@ elif st.session_state.step == "진료":
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         
-        # 모델 호출 시 API 키 유무를 다시 한 번 체크
-        if "GEMINI_API_KEY" not in st.secrets:
+        if not MODEL_AVAILABLE:
              st.error("⚠️ API 키가 설정되지 않아 상담 기능을 사용할 수 없습니다.")
         else:
             try:
@@ -458,8 +454,7 @@ elif st.session_state.step == "진료":
         st.info("💊 충분한 상담이 이루어졌다면 최종 처방전을 발급받으세요!")
     with col2:
         if st.button("📋 처방전 발급", type="primary", use_container_width=True):
-            # API 키 유무를 다시 한 번 체크
-            if "GEMINI_API_KEY" not in st.secrets:
+            if not MODEL_AVAILABLE:
                  st.error("⚠️ API 키가 설정되지 않아 처방전 기능을 사용할 수 없습니다.")
             else:
                 with st.spinner("📝 처방전 작성 중..."):
@@ -550,6 +545,11 @@ elif st.session_state.step == "진료":
 
 # 3단계: 처방전
 elif st.session_state.step == "처방전":
+    
+    # ----------------------------------------------------
+    # 이 부분이 오류가 난 HTML 테이블 부분입니다. 
+    # 'unsafe_allow_html=True'가 확실히 적용되어 있습니다. (이전 코드와 동일)
+    # ----------------------------------------------------
     st.markdown(f"""
         <div style='border: 3px solid #2E7D32; padding: 2rem; border-radius: 10px; background: white; margin-bottom: 2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>
             <div style='text-align: center; margin-bottom: 1.5rem;'>
