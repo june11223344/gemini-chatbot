@@ -251,26 +251,26 @@ if st.session_state.step == "접수":
         )
     
     # 고객 성별/연령 비중
-    st.markdown("### 👨👩 주요 고객 성별/연령 (상위 2개 선택)")
+    st.markdown("### 👩👨 주요 고객 성별/연령 (상위 2개 선택)")
     st.caption("주로 방문하는 고객층 2개를 선택해주세요 (선택사항)")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**남성 고객**")
-        male_20 = st.checkbox("남성 20대 이하", value=initial_store_info.get("male_20", False))
-        male_30 = st.checkbox("남성 30대", value=initial_store_info.get("male_30", False))
-        male_40 = st.checkbox("남성 40대", value=initial_store_info.get("male_40", False))
-        male_50 = st.checkbox("남성 50대", value=initial_store_info.get("male_50", False))
-        male_60 = st.checkbox("남성 60대 이상", value=initial_store_info.get("male_60", False))
-    
-    with col2:
         st.markdown("**여성 고객**")
         female_20 = st.checkbox("여성 20대 이하", value=initial_store_info.get("female_20", False))
         female_30 = st.checkbox("여성 30대", value=initial_store_info.get("female_30", False))
         female_40 = st.checkbox("여성 40대", value=initial_store_info.get("female_40", False))
         female_50 = st.checkbox("여성 50대", value=initial_store_info.get("female_50", False))
         female_60 = st.checkbox("여성 60대 이상", value=initial_store_info.get("female_60", False))
+    
+    with col2:
+        st.markdown("**남성 고객**")
+        male_20 = st.checkbox("남성 20대 이하", value=initial_store_info.get("male_20", False))
+        male_30 = st.checkbox("남성 30대", value=initial_store_info.get("male_30", False))
+        male_40 = st.checkbox("남성 40대", value=initial_store_info.get("male_40", False))
+        male_50 = st.checkbox("남성 50대", value=initial_store_info.get("male_50", False))
+        male_60 = st.checkbox("남성 60대 이상", value=initial_store_info.get("male_60", False))
     
     concern = st.text_area(
         "😰 현재 고민",
@@ -280,18 +280,18 @@ if st.session_state.step == "접수":
     )
     
     if st.button("🏥 진료 접수하기", type="primary", use_container_width=True):
-        # 선택된 고객층 정리
+        # 선택된 고객층 정리 (여성 먼저)
         selected_customers = []
-        if male_20: selected_customers.append("남성 20대 이하")
-        if male_30: selected_customers.append("남성 30대")
-        if male_40: selected_customers.append("남성 40대")
-        if male_50: selected_customers.append("남성 50대")
-        if male_60: selected_customers.append("남성 60대 이상")
         if female_20: selected_customers.append("여성 20대 이하")
         if female_30: selected_customers.append("여성 30대")
         if female_40: selected_customers.append("여성 40대")
         if female_50: selected_customers.append("여성 50대")
         if female_60: selected_customers.append("여성 60대 이상")
+        if male_20: selected_customers.append("남성 20대 이하")
+        if male_30: selected_customers.append("남성 30대")
+        if male_40: selected_customers.append("남성 40대")
+        if male_50: selected_customers.append("남성 50대")
+        if male_60: selected_customers.append("남성 60대 이상")
         
         customer_demographics = ", ".join(selected_customers) if selected_customers else "미선택"
         
