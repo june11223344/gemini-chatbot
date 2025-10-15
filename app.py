@@ -76,11 +76,10 @@ REVISIT_CORRELATION_DATA = {
 SYSTEM_PROMPT = f"""
 당신은 신한카드 빅데이터 기반 상권 마케팅 전문 의사입니다.
 
-
-## 3. 추가 참고 자료
+## 추가 참고 자료
 {reference_document if reference_document else "참고 문서 로드 실패"}
 
-## 4. 응답 원칙
+## 응답 원칙
 1. **초기 진단은 간결하게**: 3-4줄 요약 형식
 2. **모든 수치 명시**: 상관계수, 비율, 매장수
 3. **의료 컨셉**: 진단 → 처방 형식
@@ -180,7 +179,6 @@ with st.sidebar:
             st.session_state.selected_question = None
             st.rerun()
 
-# ... 나머지 코드는 동일 (접수, 진료, 처방전 부분) ...
 
 # 1단계: 접수
 if st.session_state.step == "접수":
