@@ -2,12 +2,32 @@ import streamlit as st
 import google.generativeai as genai
 from datetime import datetime
 import pandas as pd
+import requests  # 👈 추가: GitHub 문서 로드용
 
 st.set_page_config(
     page_title="상권 마케팅 처방 클리닉", 
     page_icon="🏥",
     layout="wide"
 )
+
+# ==================== GitHub 문서 로더 추가 ====================
+@st.cache_data(ttl=3600)  # 1시간 캐시
+def load_github_document(url):
+    """GitHub Raw URL에서 HTML 문서 로드"""
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        response.encoding = 'utf-8'
+        return response.text
+    except Exception as e:
+        st.error(f"⚠️ 문서 로드 실패: {e}")
+        return None
+
+# GitHub 문서 URL (secrets에 저장 권장)
+GITHUB_DOC_URL = "https://raw.githubusercontent.com/june11223344/gemini-chatbot/refs/heads/main/docs/%EC%83%81%EA%B6%8C%EB%B6%84%EC%84%9D%EA%B0%80%EC%9D%B4%EB%93%9C.html"
+
+# 문서 로드 (캐싱되어 빠름)
+reference_document = load_github_document(GITHUB_DOC_URL)
 
 # API Key 설정
 try:
@@ -52,7 +72,8 @@ REVISIT_CORRELATION_DATA = {
     "상관계수": [1.0, 0.2, 0.024, -0.018, -0.14, -0.15, -0.17]
 }
 
-SYSTEM_PROMPT = """
+# 👇 SYSTEM_PROMPT에 참고 문서 포함
+SYSTEM_PROMPT = f"""
 당신은 신한카드 빅데이터 기반 상권 마케팅 전문 의사입니다.
 
 # 핵심 데이터베이스 (반드시 활용)
@@ -99,10 +120,14 @@ SYSTEM_PROMPT = """
 - 동일 업종 매출건수 비중: **+0.20**
 - 동일 업종 내 해지 가맹점 비중: **-0.15**
 
-## 3. 응답 원칙
+## 3. 추가 참고 자료
+{reference_document if reference_document else "참고 문서 로드 실패"}
+
+## 4. 응답 원칙
 1. **초기 진단은 간결하게**: 3-4줄 요약 형식
 2. **모든 수치 명시**: 상관계수, 비율, 매장수
 3. **의료 컨셉**: 진단 → 처방 형식
+4. **참고 자료 활용**: 위의 HTML 문서 내용도 적극 활용
 """
 
 # 헤더
@@ -122,6 +147,17 @@ with st.sidebar:
             <h3 style='margin: 0;'>클리닉 진료실</h3>
         </div>
     """, unsafe_allow_html=True)
+    
+    # 👇 참고 문서 표시 추가
+    st.markdown("### 📚 참고 자료")
+    with st.expander("📄 상권 분석 가이드", expanded=False):
+        if reference_document:
+            st.markdown(reference_document, unsafe_allow_html=True)
+            st.success("✅ 문서 로드 완료")
+        else:
+            st.error("❌ 문서를 불러올 수 없습니다.")
+    
+    st.markdown("---")
     
     st.markdown("### 📋 사전 질문 선택")
     st.caption("질문을 클릭하면 자동으로 정보가 입력됩니다")
@@ -186,6 +222,8 @@ with st.sidebar:
             st.session_state.messages = []
             st.session_state.selected_question = None
             st.rerun()
+
+# ... 나머지 코드는 동일 (접수, 진료, 처방전 부분) ...
 
 # 1단계: 접수
 if st.session_state.step == "접수":
