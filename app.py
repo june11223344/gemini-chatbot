@@ -5,7 +5,7 @@ import pandas as pd
 import requests  # 👈 추가: GitHub 문서 로드용
 
 st.set_page_config(
-    page_title="상권 마케팅 처방 클리닉", 
+    page_title="상권 마케팅 처방 클리ㄹㄹㄹ닉", 
     page_icon="🏥",
     layout="wide"
 )
