@@ -24,7 +24,7 @@ def load_github_document(url):
         return None
 
 # GitHub 문서 URL (secrets에 저장 권장)
-GITHUB_DOC_URL = "https://raw.githubusercontent.com/june11223344/gemini-chatbot/refs/heads/main/docs/%EC%83%81%EA%B6%8C%EB%B6%84%EC%84%9D%EA%B0%80%EC%9D%B4%EB%93%9C.html"
+GITHUB_DOC_URL = "https://raw.githubusercontent.com/june11223344/gemini-chatbot/refs/heads/main/docs/%EB%A7%88%EC%BC%80%ED%8C%85_%EC%A0%84%EB%9E%B5_%EB%B6%84%EC%84%9D_%EB%B3%B4%EA%B3%A0%EC%84%9C_full.html"
 
 # 문서 로드 (캐싱되어 빠름)
 reference_document = load_github_document(GITHUB_DOC_URL)
