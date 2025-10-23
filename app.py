@@ -58,7 +58,17 @@ if "diagnosis_result" not in st.session_state:
 if "selected_question" not in st.session_state:
     st.session_state.selected_question = None
 
-# 재방문율 상관계수 데이터
+# Q1 주요 고객 특성별 상관계수 데이터
+Q1_CUSTOMER_CORRELATION_DATA = {
+    "피처 (Feature)": [
+        "유동 고객 비율",
+        "거주 고객 비율",
+        "직장 고객 비율"
+    ],
+    "상관계수": [-0.35, 0.24, 0.15]
+}
+
+# Q2 재방문율 관련 데이터
 REVISIT_CORRELATION_DATA = {
     "피처 (Feature)": [
         "재방문 고객 비중",
@@ -70,6 +80,43 @@ REVISIT_CORRELATION_DATA = {
         "동일 업종 내 매출 순위 비중"
     ],
     "상관계수": [1.0, 0.2, 0.024, -0.018, -0.14, -0.15, -0.17]
+}
+
+# Q3 재방문 고객 확보 및 유동 고객 의존 완화 데이터
+Q3_REVISIT_RELATION_DATA = {
+    "피처 (Feature)": [
+        "전 업종 평균 재방문 고객 비중",
+        "상·하위 매장 간 재방문율 격차",
+        "객단가 상위(75~90%) 재방문율",
+        "유동 고객 비중 ↘ 재방문률",
+        "거주 고객 비중 ↗ 재방문률",
+        "직장 고객 비중 ↗ 재방문률"
+    ],
+    "값": ["26.1%", "격차 존재", "30% 이상", "-0.32", "0.24", "0.15"]
+}
+
+# Q4 지역(상권)별 매출 편차 데이터
+Q4_REGION_SALES_CORRELATION_DATA = {
+    "피처 (Feature)": [
+        "유동 고객 비중",
+        "거주 고객 비중",
+        "직장 고객 비중",
+        "반경 500m 내 경쟁 매장 수",
+        "중간 매출군 재방문율"
+    ],
+    "상관계수": [0.494, 0.378, 0.113, 0.506, 0.188]
+}
+
+# Q5 월·계절별 매출 변동 데이터
+Q5_SEASONAL_CORRELATION_DATA = {
+    "피처 (Feature)": [
+        "여름철(6~7월) 재방문율",
+        "유동 고객 비율(6~7월)",
+        "거주 고객 비율(9월)",
+        "유동 고객 비율(9월)",
+        "직장 고객 비율(12월)"
+    ],
+    "상관계수": [0.2677, 0.576, 0.3497, 0.5451, 0.1225]
 }
 
 # 👇 SYSTEM_PROMPT에 참고 문서 포함
@@ -126,6 +173,12 @@ with st.sidebar:
     
     q3 = st.button("❓ 질문 3: 요식업 문제 해결", key="btn_q3", use_container_width=True)
     st.caption("→ 요식업 문제 진단 및 해결방안")
+    
+    q4 = st.button("❓ 질문 4: 지역별 매출 편차", key="btn_q4", use_container_width=True)
+    st.caption("→ 상권별 매출 차이 분석")
+    
+    q5 = st.button("❓ 질문 5: 계절별 매출 변동", key="btn_q5", use_container_width=True)
+    st.caption("→ 월/계절별 매출 패턴 분석")
 
     if q1:
         st.session_state.selected_question = 1
@@ -160,12 +213,54 @@ with st.sidebar:
         }
         st.rerun()
     
+    if q4:
+        st.session_state.selected_question = 4
+        st.session_state.step = "접수"
+        st.session_state.store_info = {
+            "business_type": "카페",
+            "location_detail": "역세권/대로변 (유동인구 많음)",
+            "customer_type": "신규 고객 많음",
+            "concern": "같은 지역 내에서도 매출 편차가 큰 이유를 알고 싶어요"
+        }
+        st.rerun()
+    
+    if q5:
+        st.session_state.selected_question = 5
+        st.session_state.step = "접수"
+        st.session_state.store_info = {
+            "business_type": "카페",
+            "location_detail": "역세권/대로변 (유동인구 많음)",
+            "customer_type": "신규 고객 많음",
+            "concern": "계절별로 매출이 크게 변동하는데 대응 전략을 알고 싶어요"
+        }
+        st.rerun()
+    
     st.markdown("---")
     
-    # 재방문율 데이터 표시 (질문 2일 때만)
-    if st.session_state.selected_question == 2:
+    # 선택된 질문에 따라 관련 데이터 표시
+    if st.session_state.selected_question == 1:
+        st.markdown("### 📊 고객 특성별 상관 데이터")
+        df = pd.DataFrame(Q1_CUSTOMER_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 분석 결과")
+    elif st.session_state.selected_question == 2:
         st.markdown("### 📊 재방문율 상관 데이터")
         df = pd.DataFrame(REVISIT_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 분석 결과")
+    elif st.session_state.selected_question == 3:
+        st.markdown("### 📊 재방문 고객 확보 데이터")
+        df = pd.DataFrame(Q3_REVISIT_RELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 분석 결과")
+    elif st.session_state.selected_question == 4:
+        st.markdown("### 📊 지역별 매출 편차 데이터")
+        df = pd.DataFrame(Q4_REGION_SALES_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 분석 결과")
+    elif st.session_state.selected_question == 5:
+        st.markdown("### 📊 계절별 매출 변동 데이터")
+        df = pd.DataFrame(Q5_SEASONAL_CORRELATION_DATA)
         st.dataframe(df, use_container_width=True, hide_index=True)
         st.caption("※ 신한카드 빅데이터 분석 결과")
     
@@ -179,8 +274,6 @@ with st.sidebar:
             st.session_state.selected_question = None
             st.rerun()
 
-# ... 나머지 코드는 동일 (접수, 진료, 처방전 부분) ...
-
 # 1단계: 접수
 if st.session_state.step == "접수":
     st.header("📋 접수 데스크")
@@ -188,7 +281,9 @@ if st.session_state.step == "접수":
     question_titles = {
         1: "질문 1: 카페 고객 타겟팅",
         2: "질문 2: 재방문율 개선",
-        3: "질문 3: 요식업 문제 해결"
+        3: "질문 3: 요식업 문제 해결",
+        4: "질문 4: 지역별 매출 편차",
+        5: "질문 5: 계절별 매출 변동"
     }
     
     initial_store_info = st.session_state.store_info
@@ -319,6 +414,10 @@ if st.session_state.step == "접수":
                         question_context = "\n\n[중요] 재방문율 개선 전략에 집중"
                     elif st.session_state.selected_question == 3:
                         question_context = "\n\n[중요] 요식업 문제 분석에 집중"
+                    elif st.session_state.selected_question == 4:
+                        question_context = "\n\n[중요] 지역별 매출 편차 분석에 집중"
+                    elif st.session_state.selected_question == 5:
+                        question_context = "\n\n[중요] 계절별 매출 변동 분석에 집중"
                     
                     initial_prompt = f"""
                     {SYSTEM_PROMPT}
@@ -360,7 +459,9 @@ elif st.session_state.step == "진료":
     question_titles = {
         1: "질문 1: 카페 고객 타겟팅",
         2: "질문 2: 재방문율 개선",
-        3: "질문 3: 요식업 문제 해결"
+        3: "질문 3: 요식업 문제 해결",
+        4: "질문 4: 지역별 매출 편차",
+        5: "질문 5: 계절별 매출 변동"
     }
     
     st.markdown(f"""
@@ -389,12 +490,36 @@ elif st.session_state.step == "진료":
             **고민:** {info.get('concern', 'N/A')}
             """)
     
-    # 재방문율 데이터 표시 (질문 2일 때)
-    if st.session_state.store_info.get('question_type') == 2:
+    # 선택된 질문에 따라 관련 데이터 표시
+    if st.session_state.store_info.get('question_type') == 1:
+        st.markdown("### 📊 고객 특성별 상관 데이터")
+        df = pd.DataFrame(Q1_CUSTOMER_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 - 고객 유형별 상관계수")
+        st.markdown("---")
+    elif st.session_state.store_info.get('question_type') == 2:
         st.markdown("### 📊 재방문율 상관 데이터")
         df = pd.DataFrame(REVISIT_CORRELATION_DATA)
         st.dataframe(df, use_container_width=True, hide_index=True)
         st.caption("※ 신한카드 빅데이터 - 재방문 고객 비중과의 상관계수")
+        st.markdown("---")
+    elif st.session_state.store_info.get('question_type') == 3:
+        st.markdown("### 📊 재방문 고객 확보 데이터")
+        df = pd.DataFrame(Q3_REVISIT_RELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 - 재방문 관련 주요 지표")
+        st.markdown("---")
+    elif st.session_state.store_info.get('question_type') == 4:
+        st.markdown("### 📊 지역별 매출 편차 데이터")
+        df = pd.DataFrame(Q4_REGION_SALES_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 - 지역 매출 영향 요인")
+        st.markdown("---")
+    elif st.session_state.store_info.get('question_type') == 5:
+        st.markdown("### 📊 계절별 매출 변동 데이터")
+        df = pd.DataFrame(Q5_SEASONAL_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption("※ 신한카드 빅데이터 - 월별 고객 패턴 상관계수")
         st.markdown("---")
     
     st.markdown("### 🔬 초기 검사 결과")
@@ -542,10 +667,26 @@ elif st.session_state.step == "처방전":
     - **발급일:** {info.get('date', 'N/A')}
     """)
     
-    # 재방문율 데이터 (질문 2일 때)
-    if st.session_state.store_info.get('question_type') == 2:
+    # 선택된 질문에 따라 관련 데이터 표시 (처방전 단계)
+    if st.session_state.store_info.get('question_type') == 1:
+        st.markdown("#### 📊 고객 특성별 상관계수 참고")
+        df = pd.DataFrame(Q1_CUSTOMER_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    elif st.session_state.store_info.get('question_type') == 2:
         st.markdown("#### 📊 재방문율 상관계수 참고")
         df = pd.DataFrame(REVISIT_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    elif st.session_state.store_info.get('question_type') == 3:
+        st.markdown("#### 📊 재방문 고객 확보 데이터 참고")
+        df = pd.DataFrame(Q3_REVISIT_RELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    elif st.session_state.store_info.get('question_type') == 4:
+        st.markdown("#### 📊 지역별 매출 편차 데이터 참고")
+        df = pd.DataFrame(Q4_REGION_SALES_CORRELATION_DATA)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+    elif st.session_state.store_info.get('question_type') == 5:
+        st.markdown("#### 📊 계절별 매출 변동 데이터 참고")
+        df = pd.DataFrame(Q5_SEASONAL_CORRELATION_DATA)
         st.dataframe(df, use_container_width=True, hide_index=True)
     
     st.markdown("---")
