@@ -151,16 +151,6 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    # 👇 참고 문서 표시 추가
-    st.markdown("### 📚 참고 자료")
-    with st.expander("📄 상권 분석 가이드", expanded=False):
-        if reference_document:
-            st.markdown(reference_document, unsafe_allow_html=True)
-            st.success("✅ 문서 로드 완료")
-        else:
-            st.error("❌ 문서를 불러올 수 없습니다.")
-    
-    st.markdown("---")
     
     st.markdown("### 📋 사전 질문 선택")
     st.caption("질문을 클릭하면 자동으로 정보가 입력됩니다")
